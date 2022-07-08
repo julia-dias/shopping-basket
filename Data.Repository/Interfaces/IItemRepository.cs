@@ -6,8 +6,8 @@
 
     public interface IItemRepository
     {
-        Task<Item> GetAllItemsAsync();
+        Task<ICollection<Item>> GetAllItemsAsync();
 
-        Task<Item> AddItemsAsync(ICollection<Item> items);
+        Task<Item> AddItemAsync(Item item);
     }
 }

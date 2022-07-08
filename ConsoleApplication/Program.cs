@@ -5,8 +5,10 @@
     using System.Linq;
     using System.Threading.Tasks;
     using Application.Services.Implementations;
+    using Application.Services.Interfaces;
+    using Data.Repository.Implementations;
+    using Data.Repository.Interfaces;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
     using Presentation.ConsoleApp.Helpers;
 
     public static class Program
@@ -16,14 +18,15 @@
 
         public static async Task Main(string[] args)
         {
-            var host = Host.CreateDefaultBuilder(args)
-                .ConfigureServices(services => { services.AddTransient<ShoppingBasketService>(); })
-                .Build();
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            var shoppingBasketService = host.Services.GetRequiredService<ShoppingBasketService>();
+            var serviceProvider = RegisterServices();
+
+            var itemMenu = serviceProvider.GetService<Menu>();
+
+            await itemMenu.SeedItems();
 
             bool exit = false;
-
             while (!exit)
             {
                 Tools.DisplayMenu();
@@ -36,11 +39,9 @@
 
                     if (knownCommands.Contains(inputCommands[0]) && inputCommands.Length > 1)
                     {
-                        items = inputCommands.ToList();
+                        items = inputCommands.Skip(1).ToList();
 
-                        var options = new Options(shoppingBasketService);
-
-                        await options.AddToBasketAsync(items);
+                        await itemMenu.AddToBasketAsync(items);
                     }
                     else
                     {
@@ -48,6 +49,16 @@
                     }
                 }
             }
+        }
+
+        private static IServiceProvider RegisterServices()
+        {
+            var services = new ServiceCollection()
+               .AddScoped<IItemRepository, ItemRepository>()
+               .AddScoped<IItemService, ItemService>()
+               .AddTransient<Menu>();
+
+            return services.BuildServiceProvider();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace Data.Repository.Implementations
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Data.Repository.Interfaces;
@@ -7,14 +8,26 @@
 
     public class ItemRepository : IItemRepository
     {
-        public Task<Item> GetAllItemsAsync()
+        private static ICollection<Item> itemsInMemory;
+
+        public ItemRepository()
         {
-            throw new System.NotImplementedException();
+            itemsInMemory = new List<Item>();
         }
 
-        public Task<Item> AddItemsAsync(ICollection<Item> items)
+        public Task<ICollection<Item>> GetAllItemsAsync()
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(itemsInMemory);
+        }
+
+        public Task<Item> AddItemAsync(Item item)
+        {
+            item.DateCreated = DateTime.Now;
+            item.DateUpdated = item.DateCreated;
+
+            itemsInMemory.Add(item);
+
+            return Task.FromResult(item);
         }
     }
 }
