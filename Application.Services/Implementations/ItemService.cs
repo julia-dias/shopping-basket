@@ -94,7 +94,7 @@
             var discountFinalResult = new List<DiscountItemsResult>();
 
             var priceItems = countItems
-                .GroupBy(i => (ItemName: i.Name.ToLower(), Quantity: i.Quantity))
+                .GroupBy(i => (ItemName: i.Reference.ToLower(), Quantity: i.Quantity))
                 //Calculate Total Price per Item
                 .Select(g =>
                 {
@@ -104,25 +104,11 @@
 
                     var discountData = itemsDiscounts.Where(x => x.ItemReference == item.Reference).ToList();
 
-                    //apply discounts
-                    decimal discountPrice = 0;
-
-                    if (discountData != null && discountData.Count() > 0)
-                    {
-                        foreach (ItemDiscount discount in discountData)
-                        {
-                            discountPrice = discount.CalculateDiscount(g.Key.Quantity, item.Price);
-
-                            var discoutResult = new DiscountItemsResult
-                            {
-                                ItemReference = item.Reference,
-                                DiscountPrice = discountPrice,
-                                DiscountPercentage = discount.DiscountPercentage,
-                            };
-
-                            discountFinalResult.Add(discoutResult);
-                        }
-                    }
+                    var discountPrice = this.ApplyDiscount(
+                        discountData,
+                        item,
+                        g.Key.Quantity,
+                        discountFinalResult);
 
                     var total = subTotal - discountPrice;
 
@@ -148,7 +134,7 @@
 
         private async Task<List<Discount>> GetItemsDiscounts(List<ItemsQuantity> itemsCount)
         {
-            var discounts = await this.itemsRepository.GetDiscounts(itemsCount.Select(x => x.Name).ToArray());
+            var discounts = await this.itemsRepository.GetDiscountsAsync(itemsCount.Select(x => x.Reference).ToArray());
 
             var multibuyDiscounts = discounts.Where(x => x.GetType() == typeof(MultibuyDiscount)).ToList();
 
@@ -156,7 +142,7 @@
 
             foreach (MultibuyDiscount discount in multibuyDiscounts)
             {
-                var item = itemsCount.Where(x => x.Name == discount.ItemReference).FirstOrDefault();
+                var item = itemsCount.Where(x => x.Reference == discount.ItemReference).FirstOrDefault();
 
                 if (item?.Quantity >= discount.ItemQuantity)
                 {
@@ -165,8 +151,7 @@
 
                     itemsDiscounts.Add(new ItemDiscountFromMultiBuy
                     {
-                        Id = 0,
-                        ItemId = discount.ItemOfferId,
+                        Id = Guid.NewGuid(),
                         ItemReference = discount.ItemOfferReference,
                         DiscountPercentage = discount.ItemOfferDiscountPercentage,
                         Quantity = discount.ItemOfferQuantity * finalDiscountQuantity,
@@ -187,12 +172,40 @@
                 {
                     return new ItemsQuantity
                     {
-                        Name = g.Key,
+                        Reference = g.Key,
                         Quantity = g.Count(),
                     };
                 }).ToList();
 
             return countItems;
+        }
+
+        private decimal ApplyDiscount(
+            List<Discount> discountData,
+            ItemDto itemMetadata,
+            int itemQuantity,
+            List<DiscountItemsResult> result)
+        {
+            decimal discountPrice = 0;
+
+            if (discountData != null && discountData.Count() > 0)
+            {
+                foreach (ItemDiscount discount in discountData)
+                {
+                    discountPrice = discount.CalculateDiscount(itemQuantity, itemMetadata.Price);
+
+                    var discoutResult = new DiscountItemsResult
+                    {
+                        ItemReference = itemMetadata.Reference,
+                        DiscountPrice = discountPrice,
+                        DiscountPercentage = discount.DiscountPercentage,
+                    };
+
+                    result.Add(discoutResult);
+                }
+            }
+
+            return discountPrice;
         }
     }
 }

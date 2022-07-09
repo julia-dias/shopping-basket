@@ -4,8 +4,6 @@
     {
         public int ItemQuantity { get; set; }
 
-        public int ItemOfferId { get; set; }
-
         public string ItemOfferReference { get; set; }
 
         public int ItemOfferQuantity { get; set; }

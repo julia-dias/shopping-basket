@@ -3,6 +3,7 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Domain.Model;
+    using Domain.Model.Item;
 
     public interface IItemRepository
     {
@@ -10,6 +11,6 @@
 
         Task<Item> AddItemAsync(Item item);
 
-        Task<IEnumerable<Discount>> GetDiscounts(string[] itemReferences);
+        Task<IEnumerable<Discount>> GetDiscountsAsync(string[] itemReferences);
     }
 }

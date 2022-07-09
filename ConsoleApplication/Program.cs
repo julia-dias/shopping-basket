@@ -13,8 +13,10 @@
 
     public static class Program
     {
-        public static List<string> items;
         private static readonly string[] knownCommands = { "shoppingbasket" };
+
+        public static List<string> items;
+        private static Menu menu;
 
         public static async Task Main(string[] args)
         {
@@ -22,8 +24,7 @@
 
             var serviceProvider = RegisterServices();
 
-            var menu = serviceProvider.GetService<Menu>();
-
+            menu = serviceProvider.GetService<Menu>();
             await menu.SeedItems();
 
             bool exit = false;

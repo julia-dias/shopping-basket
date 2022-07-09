@@ -1,11 +1,13 @@
 namespace Application.Tests
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using Application.Services.Implementations;
     using Data.Repository.Interfaces;
     using Domain.Model;
+    using Domain.Model.Item;
     using Moq;
     using NUnit.Framework;
 
@@ -32,10 +34,10 @@ namespace Application.Tests
         public void Setup()
         {
             itemsDomain = new List<Item> {
-                new Item { Id = 1, Reference = "soup", Price = SoupPrice, PriceUnit = PriceUnitEnum.Unit },
-                new Item { Id = 2, Reference = "bread", Price = BreadPrice, PriceUnit = PriceUnitEnum.Unit },
-                new Item { Id = 3, Reference = "milk", Price = MilkPrice, PriceUnit = PriceUnitEnum.Unit },
-                new Item { Id = 4, Reference = "apples", Price = ApplesPrice, PriceUnit = PriceUnitEnum.Bag },
+                new Item { Reference = "soup", Price = SoupPrice, PriceUnit = PriceUnitEnum.Unit },
+                new Item { Reference = "bread", Price = BreadPrice, PriceUnit = PriceUnitEnum.Unit },
+                new Item { Reference = "milk", Price = MilkPrice, PriceUnit = PriceUnitEnum.Unit },
+                new Item { Reference = "apples", Price = ApplesPrice, PriceUnit = PriceUnitEnum.Bag },
             };
         }
 
@@ -245,7 +247,7 @@ namespace Application.Tests
             var items = itemsReference.Select(x => x).Distinct().ToArray();
 
             this.mockItemsRepository
-                .Setup(m => m.GetDiscounts(items))
+                .Setup(m => m.GetDiscountsAsync(items))
                 .ReturnsAsync(discounts);
         }
 
@@ -253,14 +255,14 @@ namespace Application.Tests
         {
             discounts = new List<Discount>{
                 new ItemDiscount {
-                    Id = 1,
+                    Id = Guid.NewGuid(),
                     Description = "Apples have a 10% discount off their normal price",
                     ItemReference = "apples",
                     DiscountPercentage = 10,
                     IsActive = true,
                 },
                 new MultibuyDiscount {
-                    Id = 2,
+                    Id = Guid.NewGuid(),
                     Description = "Buy 2 tins of soup and get a loaf of bread for half price",
                     ItemReference = "soup",
                     ItemQuantity = 2,

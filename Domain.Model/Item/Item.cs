@@ -1,11 +1,9 @@
-﻿namespace Domain.Model
+﻿namespace Domain.Model.Item
 {
     using System;
 
     public class Item
     {
-        public int Id { get; set; }
-
         public string Reference { get; set; }
 
         public decimal Price { get; set; }

@@ -1,9 +1,8 @@
-﻿namespace Domain.Model
+﻿namespace Domain.Model.Item
 {
     public enum PriceUnitEnum
     {
         Unit = 1,
         Bag = 2,
-        Kg = 3,
     }
 }

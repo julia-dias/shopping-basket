@@ -6,6 +6,7 @@
     using System.Threading.Tasks;
     using Data.Repository.Interfaces;
     using Domain.Model;
+    using Domain.Model.Item;
 
     public class ItemRepository : IItemRepository
     {
@@ -17,14 +18,14 @@
             itemsInMemory = new List<Item>();
             discountsInMemory = new List<Discount>{
                 new ItemDiscount {
-                    Id = 1,
+                    Id = Guid.NewGuid(),
                     Description = "Apples have a 10% discount off their normal price",
                     ItemReference = "apples",
                     DiscountPercentage = 10,
                     IsActive = true,
                 },
                 new MultibuyDiscount {
-                    Id = 2,
+                    Id = Guid.NewGuid(),
                     Description = "Buy 2 tins of soup and get a loaf of bread for half price",
                     ItemReference = "soup",
                     ItemQuantity = 2,
@@ -51,7 +52,7 @@
             return Task.FromResult(item);
         }
 
-        public Task<IEnumerable<Discount>> GetDiscounts(string[] itemReferences)
+        public Task<IEnumerable<Discount>> GetDiscountsAsync(string[] itemReferences)
         {
             return Task.FromResult(discountsInMemory.Where(x => itemReferences.Any(y => y == x.ItemReference)));
         }

@@ -21,10 +21,10 @@
             try
             {
                 var items = new List<ItemDto> {
-                    new ItemDto { Id = 1, Reference = "soup", Price = 0.65m, PriceUnit = "Unit" },
-                    new ItemDto { Id = 2, Reference = "bread", Price = 0.80m, PriceUnit = "Unit" },
-                    new ItemDto { Id = 3, Reference = "milk", Price = 1.30m, PriceUnit = "Unit" },
-                    new ItemDto { Id = 4, Reference = "apples", Price = 1.00m, PriceUnit = "Bag" },
+                    new ItemDto { Reference = "soup", Price = 0.65m, PriceUnit = "Unit" },
+                    new ItemDto { Reference = "bread", Price = 0.80m, PriceUnit = "Unit" },
+                    new ItemDto { Reference = "milk", Price = 1.30m, PriceUnit = "Unit" },
+                    new ItemDto { Reference = "apples", Price = 1.00m, PriceUnit = "Bag" },
                 };
 
                 foreach (var item in items)
@@ -124,7 +124,7 @@
 
             foreach (var item in items)
             {
-                Console.WriteLine("{0} - {1}", item.Id, item.Reference);
+                Console.WriteLine("- {0}", item.Reference);
             }
         }
 

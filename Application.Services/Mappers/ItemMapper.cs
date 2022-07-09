@@ -3,6 +3,7 @@
     using System;
     using Application.DTO;
     using Domain.Model;
+    using Domain.Model.Item;
 
     public static class ItemMapper
     {
@@ -15,7 +16,6 @@
 
             return new ItemDto
             {
-                Id = item.Id,
                 Reference = item.Reference,
                 Price = item.Price,
                 PriceUnit = item.PriceUnit.ToString(),
@@ -31,7 +31,6 @@
 
             return new Item
             {
-                Id = item.Id,
                 Reference = item.Reference,
                 Price = item.Price,
                 PriceUnit = Enum.Parse<PriceUnitEnum>(item.PriceUnit),
