@@ -16,7 +16,7 @@
             return new ItemDto
             {
                 Id = item.Id,
-                Name = item.Name,
+                Reference = item.Reference,
                 Price = item.Price,
                 PriceUnit = item.PriceUnit.ToString(),
             };
@@ -32,7 +32,7 @@
             return new Item
             {
                 Id = item.Id,
-                Name = item.Name,
+                Reference = item.Reference,
                 Price = item.Price,
                 PriceUnit = Enum.Parse<PriceUnitEnum>(item.PriceUnit),
             };

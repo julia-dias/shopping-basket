@@ -22,14 +22,15 @@
 
             var serviceProvider = RegisterServices();
 
-            var itemMenu = serviceProvider.GetService<Menu>();
+            var menu = serviceProvider.GetService<Menu>();
 
-            await itemMenu.SeedItems();
+            await menu.SeedItems();
 
             bool exit = false;
+
             while (!exit)
             {
-                Tools.DisplayMenu();
+                menu.DisplayMenu();
 
                 var input = Console.ReadLine();
 
@@ -41,11 +42,11 @@
                     {
                         items = inputCommands.Skip(1).ToList();
 
-                        await itemMenu.AddToBasketAsync(items);
+                        await menu.AddToBasketAsync(items);
                     }
                     else
                     {
-                        Tools.ThrowConsoleError();
+                        menu.ThrowConsoleError();
                     }
                 }
             }

@@ -21,10 +21,10 @@
             try
             {
                 var items = new List<ItemDto> {
-                    new ItemDto { Id = 1, Name = "soup", Price = 0.65m, PriceUnit = "Unit" },
-                    new ItemDto { Id = 2, Name = "bread", Price = 0.80m, PriceUnit = "Unit" },
-                    new ItemDto { Id = 3, Name = "milk", Price = 1.30m, PriceUnit = "Unit" },
-                    new ItemDto { Id = 4, Name = "apples", Price = 1.00m, PriceUnit = "Bag" },
+                    new ItemDto { Id = 1, Reference = "soup", Price = 0.65m, PriceUnit = "Unit" },
+                    new ItemDto { Id = 2, Reference = "bread", Price = 0.80m, PriceUnit = "Unit" },
+                    new ItemDto { Id = 3, Reference = "milk", Price = 1.30m, PriceUnit = "Unit" },
+                    new ItemDto { Id = 4, Reference = "apples", Price = 1.00m, PriceUnit = "Bag" },
                 };
 
                 foreach (var item in items)
@@ -61,22 +61,24 @@
                 if (response is null)
                 {
                     DisplayError();
+                    return;
                 }
 
                 if (!response.Success)
                 {
                     DisplayError(response.Message);
+                    return;
                 }
 
                 Console.WriteLine("\n*** Shopping Cost ***");
 
-                Console.WriteLine("Subtotal: € {0}", response.SubTotal);
+                Console.WriteLine("Subtotal: €{0}", response.SubTotal);
 
                 if (response.DiscountItems != null && response.DiscountItems.Count > 0)
                 {
                     foreach (var item in response.DiscountItems)
                     {
-                        Console.WriteLine("{0} {1}% off: -€ {2}", item.ItemName, item.DiscountPercentage, item.DiscountPrice);
+                        Console.WriteLine("{0} {1}% off: -€{2}", item.ItemReference, item.DiscountPercentage, item.DiscountPrice);
                     }
                 }
                 else
@@ -84,7 +86,7 @@
                     Console.WriteLine("(No offers available)");
                 }
 
-                Console.WriteLine("Total price: € {0}", response.Total);
+                Console.WriteLine("Total price: €{0}", response.Total);
 
                 DisplayResult();
             }
@@ -94,6 +96,27 @@
             }
         }
 
+        public void DisplayMenu()
+        {
+            Console.WriteLine("******************************\r");
+            Console.WriteLine("******* SHOPPING BASKET ******\r", Console.Title);
+            Console.WriteLine("******************************\n");
+
+            Console.WriteLine("Add items to basket with the following syntax (and press Enter):\r");
+            Console.WriteLine("  shoppingbasket <item1> <item2>\r");
+            Console.WriteLine("\n");
+        }
+
+        public void ThrowConsoleError()
+        {
+            Console.Write("\r\nERROR: Command not found\r");
+            Console.WriteLine("\n");
+            Console.Write("\r\nPress Enter to return to Main Menu");
+
+            Console.ReadLine();
+            Console.Clear();
+        }
+
         private static void DisplayResultSeedingData(List<ItemDto> items)
         {
             Console.Write("\r\n**** Items successfully seeded! ****");
@@ -101,7 +124,7 @@
 
             foreach (var item in items)
             {
-                Console.WriteLine("{0} - {1}", item.Id, item.Name);
+                Console.WriteLine("{0} - {1}", item.Id, item.Reference);
             }
         }
 

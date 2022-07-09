@@ -7,7 +7,7 @@
 
     public interface IItemService
     {
-        Task<ICollection<ItemDto>> GetAllItemsAsync();
+        Task<IList<ItemDto>> GetAllItemsAsync();
 
         Task<ItemDto> AddItemAsync(ItemDto itemDto);
 

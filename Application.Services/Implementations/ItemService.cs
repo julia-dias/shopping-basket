@@ -1,5 +1,6 @@
 ﻿namespace Application.Services.Implementations
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -7,6 +8,7 @@
     using Application.Services.Interfaces;
     using Application.Services.Mappers;
     using Data.Repository.Interfaces;
+    using Domain.Model;
     using Domain.Model.Auxiliar;
 
     public class ItemService : IItemService
@@ -18,13 +20,11 @@
             this.itemsRepository = itemsRepository;
         }
 
-        public async Task<ICollection<ItemDto>> GetAllItemsAsync()
+        public async Task<IList<ItemDto>> GetAllItemsAsync()
         {
             var items = await this.itemsRepository.GetAllItemsAsync();
 
-            return items
-              .Select(x => x.ToDto())
-              .ToList();
+            return items.Select(x => x.ToDto()).ToList();
         }
 
         public async Task<ItemDto> AddItemAsync(ItemDto itemDto)
@@ -41,13 +41,25 @@
             return newItem.ToDto();
         }
 
-        public async Task<ShoppingCostResult> AddToBasketAsync(List<string> inputItems)
+        public async Task<ShoppingCostResult> AddToBasketAsync(List<string> itemsInput)
         {
-            if (inputItems is null || inputItems.Count == 0)
+            if (itemsInput is null || itemsInput.Count == 0)
             {
                 return null;
             }
 
+            var itemsMetadata = await this.GetItemsData(itemsInput);
+
+            if (itemsMetadata.Count() == 0)
+            {
+                return this.ThrowError(itemsInput);
+            }
+
+            return await this.CalculateShoppingCostResult(itemsInput, itemsMetadata);
+        }
+
+        private async Task<List<ItemDto>> GetItemsData(List<string> inputItems)
+        {
             var items = await this.GetAllItemsAsync();
 
             if (items is null || items.Count == 0)
@@ -55,48 +67,70 @@
                 return null;
             }
 
-            var itemsData = items.Where(x => inputItems.Any(b => b == x.Name)).ToList();
+            return items.Where(x => inputItems.Any(b => b == x.Reference)).ToList();
+        }
 
-            if (itemsData.Count() == 0)
+        private ShoppingCostResult ThrowError(List<string> inputItems)
+        {
+            var names = string.Join(", ", inputItems.Select(x => x));
+
+            return new ShoppingCostResult
             {
-                var names = string.Join(", ", inputItems.Select(x => x));
+                Success = false,
+                Message = $"Whoops! Something went wrong, can't find item with the name(s): {names}",
+            };
+        }
 
-                return new ShoppingCostResult
-                {
-                    Success = false,
-                    Message = $"Whoops! Something went wrong, can't find item with the name(s): {names}",
-                };
-            }
+        private async Task<ShoppingCostResult> CalculateShoppingCostResult(
+            List<string> itemsInput,
+            List<ItemDto> itemsMetadata)
+        {
+            itemsInput.RemoveAll(x => !itemsMetadata.Exists(b => b.Reference.ToLower() == x.ToLower()));
 
-            inputItems.RemoveAll(x => !itemsData.Exists(b => b.Name.ToLower() == x.ToLower()));
+            var countItems = this.CountItems(itemsInput);
 
-            var priceItems = inputItems
-                .GroupBy(itemName => itemName)
-                //Count Item quantities
-                .Select(g =>
-                {
-                    return new
-                    {
-                        Name = g.Key,
-                        Quantity = g.Count(),
-                    };
-                })
+            var itemsDiscounts = await this.GetItemsDiscounts(countItems);
+
+            var discountFinalResult = new List<DiscountItemsResult>();
+
+            var priceItems = countItems
                 .GroupBy(i => (ItemName: i.Name.ToLower(), Quantity: i.Quantity))
                 //Calculate Total Price per Item
                 .Select(g =>
                 {
-                    var itemPrice = itemsData.Where(x => x.Name.ToLower() == g.Key.ItemName).FirstOrDefault().Price;
+                    var item = itemsMetadata.Where(x => x.Reference.ToLower() == g.Key.ItemName).FirstOrDefault();
 
-                    var subTotal = g.Key.Quantity * itemPrice;
-                    var total = subTotal;
+                    var subTotal = g.Key.Quantity * item.Price;
+
+                    var discountData = itemsDiscounts.Where(x => x.ItemReference == item.Reference).ToList();
 
                     //apply discounts
+                    decimal discountPrice = 0;
+
+                    if (discountData != null && discountData.Count() > 0)
+                    {
+                        foreach (ItemDiscount discount in discountData)
+                        {
+                            discountPrice = discount.CalculateDiscount(g.Key.Quantity, item.Price);
+
+                            var discoutResult = new DiscountItemsResult
+                            {
+                                ItemReference = item.Reference,
+                                DiscountPrice = discountPrice,
+                                DiscountPercentage = discount.DiscountPercentage,
+                            };
+
+                            discountFinalResult.Add(discoutResult);
+                        }
+                    }
+
+                    var total = subTotal - discountPrice;
 
                     return new ShoppingCostResult
                     {
                         Success = true,
-                        SubTotal = total,
-                        Total = subTotal,
+                        SubTotal = subTotal,
+                        Total = total,
                     };
                 }).ToList();
 
@@ -108,7 +142,57 @@
                 Success = true,
                 SubTotal = subTotal,
                 Total = total,
+                DiscountItems = discountFinalResult,
             };
+        }
+
+        private async Task<List<Discount>> GetItemsDiscounts(List<ItemsQuantity> itemsCount)
+        {
+            var discounts = await this.itemsRepository.GetDiscounts(itemsCount.Select(x => x.Name).ToArray());
+
+            var multibuyDiscounts = discounts.Where(x => x.GetType() == typeof(MultibuyDiscount)).ToList();
+
+            var itemsDiscounts = discounts.Where(x => x.GetType() == typeof(ItemDiscount) && x.IsActive).ToList();
+
+            foreach (MultibuyDiscount discount in multibuyDiscounts)
+            {
+                var item = itemsCount.Where(x => x.Name == discount.ItemReference).FirstOrDefault();
+
+                if (item?.Quantity >= discount.ItemQuantity)
+                {
+                    decimal discountQuantity = item.Quantity / discount.ItemQuantity;
+                    var finalDiscountQuantity = (int)Math.Floor(discountQuantity);
+
+                    itemsDiscounts.Add(new ItemDiscountFromMultiBuy
+                    {
+                        Id = 0,
+                        ItemId = discount.ItemOfferId,
+                        ItemReference = discount.ItemOfferReference,
+                        DiscountPercentage = discount.ItemOfferDiscountPercentage,
+                        Quantity = discount.ItemOfferQuantity * finalDiscountQuantity,
+                        IsActive = true,
+                    });
+                }
+            }
+
+            return itemsDiscounts;
+        }
+
+        private List<ItemsQuantity> CountItems(List<string> itemsInput)
+        {
+            var countItems = itemsInput
+                .GroupBy(itemName => itemName)
+                //Count Item quantities
+                .Select(g =>
+                {
+                    return new ItemsQuantity
+                    {
+                        Name = g.Key,
+                        Quantity = g.Count(),
+                    };
+                }).ToList();
+
+            return countItems;
         }
     }
 }

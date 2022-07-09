@@ -1,8 +1,8 @@
 ﻿namespace Domain.Model
 {
-    public class ItemDiscount : Discount
+    public class ItemDiscountFromItem : ItemDiscount
     {
-        public decimal DiscountPercentage { get; set; }
+        public int Quantity { get; set; }
 
         public override decimal CalculateDiscount(int quantity, decimal itemPrice)
         {

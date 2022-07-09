@@ -6,8 +6,10 @@
 
     public interface IItemRepository
     {
-        Task<ICollection<Item>> GetAllItemsAsync();
+        Task<IList<Item>> GetAllItemsAsync();
 
         Task<Item> AddItemAsync(Item item);
+
+        Task<IEnumerable<Discount>> GetDiscounts(string[] itemReferences);
     }
 }

@@ -8,6 +8,10 @@
 
         public int ItemId { get; set; }
 
+        public string ItemReference { get; set; }
+
         public bool IsActive { get; set; }
+
+        public abstract decimal CalculateDiscount(int quantity, decimal itemPrice);
     }
 }
